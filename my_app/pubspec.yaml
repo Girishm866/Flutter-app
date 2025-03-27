@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies: 
+  flutter:
     sdk: flutter
   firebase_core: ^2.15.0  # Firebase का लेटेस्ट वर्ज़न चेक करके डालो
   firebase_auth: ^4.7.2  # Firebase Authentication के लिए
