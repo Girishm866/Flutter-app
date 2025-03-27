@@ -30,7 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^2.15.0  # Firebase का लेटेस्ट वर्ज़न चेक करके डालो
+  firebase_auth: ^4.7.2  # Firebase Authentication के लिए
+  cloud_firestore: ^4.8.3  # Firestore Database के लिए
+  google_mobile_ads: ^3.0.0  # AdMob ads के लिए
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
