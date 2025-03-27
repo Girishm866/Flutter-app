@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "523414483974",
+    "project_id": "victory-royale-7a228",
+    "storage_bucket": "victory-royale-7a228.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:523414483974:android:e4744805ae48b4c075bf87",
+        "android_client_info": {
+          "package_name": "com.example.my_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhoCUUwfeO3aW-x32NtocoorzXeKL6_UA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
