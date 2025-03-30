@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "523414483974",
-    "project_id": "victory-royale-7a228",
-    "storage_bucket": "victory-royale-7a228.firebasestorage.app"
+    "project_number": "175309117868",
+    "project_id": "money-pooja",
+    "storage_bucket": "money-pooja.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:523414483974:android:e4744805ae48b4c075bf87",
+        "mobilesdk_app_id": "1:175309117868:android:1262832698094e6edd8209",
         "android_client_info": {
           "package_name": "com.example.my_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "175309117868-j8eclknbecae5jl2ivk61fso2njpcmep.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDhoCUUwfeO3aW-x32NtocoorzXeKL6_UA"
+          "current_key": "AIzaSyBw8Yhwai4RS-lgy5wFzVzv8QLzvJxgo-4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "175309117868-j8eclknbecae5jl2ivk61fso2njpcmep.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

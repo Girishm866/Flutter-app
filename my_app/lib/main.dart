@@ -5,14 +5,6 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: FirestoreAddDataScreen(),
-    );
-  }
 }
 
 class FirestoreAddDataScreen extends StatefulWidget {
@@ -83,19 +75,6 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: Text('Firebase Test')),
-        body: Center(
-          child: Text('Firebase Connected! 🎉'),
-        ),
-      ),
-    );
-  }
 }
 
 
@@ -111,25 +90,6 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Free Fire Tournament'),
-          centerTitle: true,
-        ),
-        body: Center(
-          child: Text(
-            'Welcome to Free Fire Tournament!',
-            style: TextStyle(fontSize: 20),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 import 'package:flutter/material.dart';
@@ -138,8 +98,6 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
