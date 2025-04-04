@@ -8,7 +8,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(MyApp());  // const मत लगाओ अगर MyApp का constructor const नहीं है
 }
 
 class MyApp extends StatelessWidget {
@@ -79,14 +79,7 @@ class _FirestoreAddDataScreenState extends State<FirestoreAddDataScreen> {
     );
   }
 }
-
-import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-
+    
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
