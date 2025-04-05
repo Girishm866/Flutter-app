@@ -36,12 +36,8 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> createUserInFirestore(User user) async {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
     final docSnapshot = await userDoc.get();
-
     if (!docSnapshot.exists) {
-      await userDoc.set({
-        'email': user.email,
-        'wallet': 100,
-      });
+      await userDoc.set({'email': user.email, 'wallet': 100});
     }
   }
 
@@ -60,7 +56,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         await createUserInFirestore(userCredential.user!);
       }
-      setState(() {}); // Login/Register के बाद screen update हो
+      setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -144,10 +140,10 @@ class UserProfileScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => JoinMatchScreen(matchId: 'match1'), // Example
+                      builder: (_) => MatchListScreen(),
                     ));
                   },
-                  child: Text('Join Match'),
+                  child: Text('View All Matches'),
                 ),
                 Spacer(),
                 Center(
@@ -160,6 +156,85 @@ class UserProfileScreen extends StatelessWidget {
                     },
                     child: Text('Logout'),
                   ),
+                )
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ===================== MATCH LIST SCREEN =====================
+class MatchListScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('All Matches')),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('matches').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          final matches = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: matches.length,
+            itemBuilder: (context, index) {
+              final match = matches[index];
+              final data = match.data();
+              return ListTile(
+                title: Text(data['title'] ?? 'No Title'),
+                subtitle: Text('Entry Fee: ₹${data['entryFee'] ?? 0} | Slots: ${data['slots'] ?? 0}'),
+                trailing: Icon(Icons.arrow_forward),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => MatchDetailsScreen(matchId: match.id),
+                  ));
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ===================== MATCH DETAILS SCREEN =====================
+class MatchDetailsScreen extends StatelessWidget {
+  final String matchId;
+  MatchDetailsScreen({required this.matchId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Match Details')),
+      body: FutureBuilder(
+        future: FirebaseFirestore.instance.collection('matches').doc(matchId).get(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          final data = snapshot.data!.data()!;
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Title: ${data['title']}', style: TextStyle(fontSize: 22)),
+                SizedBox(height: 10),
+                Text('Entry Fee: ₹${data['entryFee']}'),
+                SizedBox(height: 10),
+                Text('Total Slots: ${data['slots']}'),
+                SizedBox(height: 10),
+                Text('Joined: ${(data['joinedUsers'] as List?)?.length ?? 0}'),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => JoinMatchScreen(matchId: matchId),
+                    ));
+                  },
+                  child: Text('Join This Match'),
                 )
               ],
             ),
@@ -209,7 +284,6 @@ class JoinMatchScreen extends StatelessWidget {
       transaction.update(userDoc, {
         'wallet': currentBalance - entryFee,
       });
-
       transaction.update(matchDoc, {
         'joinedUsers': FieldValue.arrayUnion([uid]),
       });
@@ -228,7 +302,7 @@ class JoinMatchScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () => joinMatch(context),
-          child: Text('Join Match'),
+          child: Text('Confirm Join'),
         ),
       ),
     );
