@@ -5,11 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class JoinMatchScreen extends StatelessWidget {
   final String matchId;
 
-  JoinMatchScreen({required this.matchId});
-
-  final user = FirebaseAuth.instance.currentUser;
+  const JoinMatchScreen({super.key, required this.matchId});
 
   Future<void> joinMatch(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid;
     if (uid == null) return;
 
