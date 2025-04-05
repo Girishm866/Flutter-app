@@ -36,7 +36,6 @@ class JoinMatchScreen extends StatelessWidget {
       return;
     }
 
-    // Wallet update & UID add
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       transaction.update(userDoc, {
         'wallet': currentBalance - entryFee,
