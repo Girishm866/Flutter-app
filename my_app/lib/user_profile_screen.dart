@@ -25,11 +25,18 @@ class UserProfileScreen extends StatelessWidget {
     final uid = user?.uid;
     final email = user?.email ?? 'No Email';
 
+    if (uid == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('My Profile')),
+        body: Center(child: Text("User not logged in")),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text('My Profile')),
       body: FutureBuilder(
         future: Future.wait([
-          getJoinedMatchesCount(uid!),
+          getJoinedMatchesCount(uid),
           getWalletBalance(uid),
         ]),
         builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
