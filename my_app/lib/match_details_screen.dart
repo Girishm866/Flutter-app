@@ -22,13 +22,15 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       if (!userSnap.exists) throw Exception("User not found");
 
       final currentBalance = userSnap['wallet'] ?? 0;
-      final prize = 20; // जीतने वाला पैसा
+      final prize = 20;
 
       transaction.update(matchDoc, {'winnerUid': winnerUid});
       transaction.update(userDoc, {'wallet': currentBalance + prize});
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Winner updated & prize sent!')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Winner updated & prize sent!')),
+    );
     winnerUidController.clear();
   }
 
@@ -54,6 +56,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 Text('Total Slots: ${data['slots']}'),
                 Text('Joined: ${(data['joinedUsers'] as List?)?.length ?? 0}'),
                 SizedBox(height: 20),
+
+                // Winner Show or Declare
                 if (winnerUid != null)
                   Text('Winner: $winnerUid', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
                 else if (user?.email == 'admin@gmail.com') ...[
@@ -65,17 +69,19 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                   ElevatedButton(
                     onPressed: declareWinner,
                     child: Text('Declare Winner'),
-                  )
+                  ),
                 ],
+
                 SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => JoinMatchScreen(matchId: widget.matchId),
-                    ));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => JoinMatchScreen(matchId: widget.matchId)),
+                    );
                   },
                   child: Text('Join This Match'),
-                )
+                ),
               ],
             ),
           );
