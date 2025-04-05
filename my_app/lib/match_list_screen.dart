@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'match_details_screen.dart';
 
 class MatchListScreen extends StatelessWidget {
   final user = FirebaseAuth.instance.currentUser;
@@ -69,6 +70,14 @@ class MatchListScreen extends StatelessWidget {
                     child: Text('Join'),
                     onPressed: () => joinMatch(matchId, context),
                   ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MatchDetailsScreen(matchId: matchId),
+                      ),
+                    );
+                  },
                 ),
               );
             },
