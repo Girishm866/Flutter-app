@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // <-- ये जरूरी है
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -12,15 +12,15 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   bool isLogin = true;
 
-  // ✅ Firestore में user और wallet balance सेट करना
-  void createUserInFirestore(User user) async {
+  // ✅ Register पर user का Firestore document बनाना
+  Future<void> createUserInFirestore(User user) async {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final docSnapshot = await userDoc.get();
 
-    final doc = await userDoc.get();
-    if (!doc.exists) {
+    if (!docSnapshot.exists) {
       await userDoc.set({
         'email': user.email,
-        'wallet': 100,
+        'wallet': 100, // ₹100 वॉलेट बैलेंस
       });
     }
   }
@@ -37,7 +37,9 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        createUserInFirestore(userCredential.user!); // ✅ Register पर Firestore में user data
+
+        // ✅ Firestore में user data डालना
+        await createUserInFirestore(userCredential.user!);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
