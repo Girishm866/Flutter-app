@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'match_details_screen.dart';
+import 'user_profile_screen.dart';
 
 class MatchListScreen extends StatelessWidget {
   final user = FirebaseAuth.instance.currentUser;
@@ -11,15 +12,12 @@ class MatchListScreen extends StatelessWidget {
     if (uid == null) return;
 
     final matchRef = FirebaseFirestore.instance.collection('matches').doc(matchId);
-
     final matchSnapshot = await matchRef.get();
     final data = matchSnapshot.data() as Map<String, dynamic>;
     final List<dynamic> joinedUsers = data['joinedUsers'] ?? [];
 
     if (joinedUsers.contains(uid)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Already Joined')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Already Joined')));
       return;
     }
 
@@ -35,7 +33,20 @@ class MatchListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Available Matches')),
+      appBar: AppBar(
+        title: Text('Available Matches'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserProfileScreen()),
+              );
+            },
+          )
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('matches')
