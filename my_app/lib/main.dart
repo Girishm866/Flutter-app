@@ -1,4 +1,5 @@
 import 'match_create_screen.dart';
+import 'match_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasData) {
-            return MatchCreateScreen(); // Change this if needed
+            return FirestoreAddDataScreen();
           }
           return AuthScreen();
         },
@@ -39,7 +40,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ---------- Existing Firestore Add Data Screen ----------
 class FirestoreAddDataScreen extends StatefulWidget {
   @override
   _FirestoreAddDataScreenState createState() => _FirestoreAddDataScreenState();
@@ -67,11 +67,25 @@ class _FirestoreAddDataScreenState extends State<FirestoreAddDataScreen> {
     });
   }
 
+  void navigateToMatchCreate() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MatchCreateScreen()),
+    );
+  }
+
+  void navigateToMatchList() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MatchListScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Data to Firestore'),
+        title: Text('Dashboard'),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -96,7 +110,17 @@ class _FirestoreAddDataScreenState extends State<FirestoreAddDataScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: addUserData,
-              child: Text('Add Data'),
+              child: Text('Add User Data'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: navigateToMatchCreate,
+              child: Text('Create Match'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: navigateToMatchList,
+              child: Text('View Matches'),
             ),
           ],
         ),
