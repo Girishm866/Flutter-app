@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class MatchCreateScreen extends StatefulWidget {
+  @override
+  _MatchCreateScreenState createState() => _MatchCreateScreenState();
+}
+
+class _MatchCreateScreenState extends State<MatchCreateScreen> {
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController entryFeeController = TextEditingController();
+  final TextEditingController prizePoolController = TextEditingController();
+
+  void createMatch() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('matches').add({
+        'title': titleController.text,
+        'entryFee': int.tryParse(entryFeeController.text) ?? 0,
+        'prizePool': int.tryParse(prizePoolController.text) ?? 0,
+        'createdAt': Timestamp.now(),
+        'createdBy': user.uid,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Match Created!')),
+      );
+
+      titleController.clear();
+      entryFeeController.clear();
+      prizePoolController.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Create Match')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(labelText: 'Match Title'),
+            ),
+            TextField(
+              controller: entryFeeController,
+              decoration: InputDecoration(labelText: 'Entry Fee'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: prizePoolController,
+              decoration: InputDecoration(labelText: 'Prize Pool'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: createMatch,
+              child: Text('Create Match'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
