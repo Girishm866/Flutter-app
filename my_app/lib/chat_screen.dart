@@ -80,3 +80,21 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
+// Example: How to navigate to this screen from any other screen
+class SomeOtherScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Example Screen')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen()));
+          },
+          child: Text('Go to Chat'),
+        ),
+      ),
+    );
+  }
+}
