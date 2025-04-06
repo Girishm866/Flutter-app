@@ -1,96 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class MatchResultScreen extends StatefulWidget {
-  @override
-  State<MatchResultScreen> createState() => _MatchResultScreenState();
-}
-
-class _MatchResultScreenState extends State<MatchResultScreen> {
-  String selectedMatchId = '';
-  final resultController = TextEditingController();
-
-  Future<void> updateResult() async {
-    if (selectedMatchId.isEmpty || resultController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select match and enter result')));
-      return;
-    }
-
-    await FirebaseFirestore.instance.collection('matches').doc(selectedMatchId).update({
-      'result': resultController.text.trim()
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Result updated')));
-    resultController.clear();
-    setState(() {}); // Refresh view
-  }
-
+class ViewResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Upload & View Results')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Upload result section
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('matches').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return CircularProgressIndicator();
-                final matches = snapshot.data!.docs;
-                return DropdownButton<String>(
-                  hint: Text('Select Match'),
-                  value: selectedMatchId.isEmpty ? null : selectedMatchId,
-                  items: matches.map((match) {
-                    return DropdownMenuItem<String>(
-                      value: match.id,
-                      child: Text(match['title']),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => selectedMatchId = val!),
-                );
-              },
-            ),
-            TextField(
-              controller: resultController,
-              decoration: InputDecoration(labelText: 'Enter Result (e.g., UID123 won)'),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(onPressed: updateResult, child: Text('Upload Result')),
+      appBar: AppBar(title: Text('Match Results')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('matches').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
 
-            Divider(height: 30),
+          final matches = snapshot.data!.docs;
 
-            // View results section
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('matches').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return CircularProgressIndicator();
+          if (matches.isEmpty) {
+            return Center(child: Text('No match results found.'));
+          }
 
-                final matches = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: matches.length,
+            itemBuilder: (context, index) {
+              final match = matches[index];
+              final title = match['title'];
+              final result = match.data().toString().contains('result')
+                  ? match['result']
+                  : 'Result not uploaded';
 
-                if (matches.isEmpty) {
-                  return Text('No match results found.');
-                }
+              return ListTile(
+                title: Text(title),
+                subtitle: Text('Result: $result'),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
 
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: matches.length,
-                  itemBuilder: (context, index) {
-                    final match = matches[index];
-                    final title = match['title'];
-                    final result = match.data().containsKey('result') ? match['result'] : 'Result not uploaded';
-
-                    return ListTile(
-                      title: Text(title),
-                      subtitle: Text('Result: $result'),
-                    );
-                  },
-                );
-              },
-            ),
-          ],
+// Example: How to navigate to this screen (use this from any other screen)
+class SomeOtherScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Example Screen')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ViewResultScreen()));
+          },
+          child: Text('View Match Results'),
         ),
       ),
     );
