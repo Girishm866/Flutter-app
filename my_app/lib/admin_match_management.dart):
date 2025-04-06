@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AdminMatchManagement extends StatefulWidget {
+  @override
+  _AdminMatchManagementState createState() => _AdminMatchManagementState();
+}
+
+class _AdminMatchManagementState extends State<AdminMatchManagement> {
+  final titleController = TextEditingController();
+  final entryFeeController = TextEditingController();
+
+  Future<void> addMatch() async {
+    if (titleController.text.isEmpty || entryFeeController.text.isEmpty) return;
+
+    await FirebaseFirestore.instance.collection('matches').add({
+      'title': titleController.text.trim(),
+      'entryFee': int.parse(entryFeeController.text.trim()),
+      'result': '',
+      'createdAt': Timestamp.now(),
+    });
+
+    titleController.clear();
+    entryFeeController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Match added')));
+  }
+
+  Future<void> deleteMatch(String id) async {
+    await FirebaseFirestore.instance.collection('matches').doc(id).delete();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Admin Match Management')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(labelText: 'Match Title'),
+            ),
+            TextField(
+              controller: entryFeeController,
+              decoration: InputDecoration(labelText: 'Entry Fee'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(onPressed: addMatch, child: Text('Add Match')),
+            SizedBox(height: 20),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('matches').orderBy('createdAt', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+
+                  final matches = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final match = matches[index];
+                      final matchId = match.id;
+
+                      return ListTile(
+                        title: Text(match['title']),
+                        subtitle: Text('Entry Fee: ₹${match['entryFee']}'),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () => deleteMatch(matchId),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
