@@ -16,6 +16,21 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
     final walletSnap = await walletRef.get();
     final currentBalance = walletSnap.data()?['wallet'] ?? 0;
 
+    // Check if user already joined
+    final alreadyJoined = await FirebaseFirestore.instance
+        .collection('matches')
+        .doc(match.id)
+        .collection('participants')
+        .doc(userId)
+        .get();
+
+    if (alreadyJoined.exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You have already joined this match.')),
+      );
+      return;
+    }
+
     if (currentBalance >= entryFee) {
       await walletRef.update({'wallet': currentBalance - entryFee});
       await FirebaseFirestore.instance
