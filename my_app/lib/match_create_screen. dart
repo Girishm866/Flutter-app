@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class MatchCreateScreen extends StatefulWidget {
   @override
@@ -8,30 +7,51 @@ class MatchCreateScreen extends StatefulWidget {
 }
 
 class _MatchCreateScreenState extends State<MatchCreateScreen> {
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController entryFeeController = TextEditingController();
-  final TextEditingController prizePoolController = TextEditingController();
+  final TextEditingController _matchNameController = TextEditingController();
+  final TextEditingController _entryFeeController = TextEditingController();
+  final TextEditingController _prizePoolController = TextEditingController();
+
+  String _selectedGameMode = 'Solo';
+
+  final List<String> gameModes = [
+    'Solo',
+    'Duo',
+    'Squad',
+    '1v1',
+    '2v2',
+    '4v4',
+    'Lone Wolf 1v1',
+    'Lone Wolf 2v2'
+  ];
 
   void createMatch() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('matches').add({
-        'title': titleController.text,
-        'entryFee': int.tryParse(entryFeeController.text) ?? 0,
-        'prizePool': int.tryParse(prizePoolController.text) ?? 0,
-        'createdAt': Timestamp.now(),
-        'createdBy': user.uid,
-      });
-
+    if (_matchNameController.text.isEmpty ||
+        _entryFeeController.text.isEmpty ||
+        _prizePoolController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Match Created!')),
+        SnackBar(content: Text('Please fill all fields')),
       );
-
-      titleController.clear();
-      entryFeeController.clear();
-      prizePoolController.clear();
+      return;
     }
+
+    await FirebaseFirestore.instance.collection('matches').add({
+      'matchName': _matchNameController.text.trim(),
+      'entryFee': int.parse(_entryFeeController.text.trim()),
+      'prizePool': _prizePoolController.text.trim(),
+      'gameMode': _selectedGameMode,
+      'createdAt': Timestamp.now(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Match Created Successfully')),
+    );
+
+    _matchNameController.clear();
+    _entryFeeController.clear();
+    _prizePoolController.clear();
+    setState(() {
+      _selectedGameMode = 'Solo';
+    });
   }
 
   @override
@@ -43,20 +63,35 @@ class _MatchCreateScreenState extends State<MatchCreateScreen> {
         child: Column(
           children: [
             TextField(
-              controller: titleController,
-              decoration: InputDecoration(labelText: 'Match Title'),
+              controller: _matchNameController,
+              decoration: InputDecoration(labelText: 'Match Name'),
             ),
             TextField(
-              controller: entryFeeController,
-              decoration: InputDecoration(labelText: 'Entry Fee'),
+              controller: _entryFeeController,
+              decoration: InputDecoration(labelText: 'Entry Fee (₹)'),
               keyboardType: TextInputType.number,
             ),
             TextField(
-              controller: prizePoolController,
+              controller: _prizePoolController,
               decoration: InputDecoration(labelText: 'Prize Pool'),
-              keyboardType: TextInputType.number,
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedGameMode,
+              items: gameModes.map((mode) {
+                return DropdownMenuItem(
+                  value: mode,
+                  child: Text(mode),
+                );
+              }).toList(),
+              onChanged: (val) {
+                setState(() {
+                  _selectedGameMode = val!;
+                });
+              },
+              decoration: InputDecoration(labelText: 'Select Game Mode'),
+            ),
+            SizedBox(height: 24),
             ElevatedButton(
               onPressed: createMatch,
               child: Text('Create Match'),
