@@ -16,7 +16,7 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
     final walletSnap = await walletRef.get();
     final currentBalance = walletSnap.data()?['wallet'] ?? 0;
 
-    // Check if user already joined
+    // Double Join Check
     final alreadyJoined = await FirebaseFirestore.instance
         .collection('matches')
         .doc(match.id)
