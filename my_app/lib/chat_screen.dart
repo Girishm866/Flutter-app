@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -9,6 +10,17 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController messageController = TextEditingController();
+  bool isSendEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    messageController.addListener(() {
+      setState(() {
+        isSendEnabled = messageController.text.trim().isNotEmpty;
+      });
+    });
+  }
 
   void sendMessage() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -21,6 +33,10 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     messageController.clear();
+  }
+
+  String formatTimestamp(Timestamp timestamp) {
+    return DateFormat('hh:mm a').format(timestamp.toDate());
   }
 
   @override
@@ -48,10 +64,27 @@ class _ChatScreenState extends State<ChatScreen> {
                     final msg = messages[index];
                     final text = msg['text'] ?? '';
                     final sender = msg['senderId'] ?? 'Unknown';
+                    final time = formatTimestamp(msg['timestamp']);
+                    final isMe = sender == FirebaseAuth.instance.currentUser?.uid;
 
-                    return ListTile(
-                      title: Text(text),
-                      subtitle: Text('By: $sender'),
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isMe ? Colors.blue[100] : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(text, style: TextStyle(fontSize: 16)),
+                            SizedBox(height: 4),
+                            Text('$time', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 );
@@ -70,30 +103,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 IconButton(
                   icon: Icon(Icons.send),
-                  onPressed: sendMessage,
+                  onPressed: isSendEnabled ? sendMessage : null,
                 )
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Example: How to navigate to this screen from any other screen
-class SomeOtherScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Example Screen')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen()));
-          },
-          child: Text('Go to Chat'),
-        ),
       ),
     );
   }
