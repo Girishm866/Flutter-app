@@ -7,33 +7,38 @@ import 'dart:math';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MaterialApp(home: AuthScreen()));
+  runApp(MyApp());
 }
 
-class AuthScreen extends StatefulWidget {
+final auth = FirebaseAuth.instance;
+final firestore = FirebaseFirestore.instance;
+
+class MyApp extends StatelessWidget {
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: auth.currentUser == null ? AuthScreen() : HomeScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class AuthScreen extends StatelessWidget {
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLogin = true;
+  final passController = TextEditingController();
 
-  Future<void> handleAuth() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-    final auth = FirebaseAuth.instance;
-
+  void handleAuth(BuildContext context, bool isLogin) async {
     try {
       if (isLogin) {
-        await auth.signInWithEmailAndPassword(email: email, password: password);
+        await auth.signInWithEmailAndPassword(
+            email: emailController.text, password: passController.text);
       } else {
-        final cred = await auth.createUserWithEmailAndPassword(email: email, password: password);
-        await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set({
-          'email': email,
-          'wallet': 100,
-          'role': 'user'
+        final userCred = await auth.createUserWithEmailAndPassword(
+            email: emailController.text, password: passController.text);
+        await firestore.collection('users').doc(userCred.user!.uid).set({
+          'email': emailController.text,
+          'wallet': 0,
+          'role': 'user',
         });
       }
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
@@ -45,17 +50,15 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(isLogin ? 'Login' : 'Register')),
+      appBar: AppBar(title: Text('Tournament App')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(children: [
           TextField(controller: emailController, decoration: InputDecoration(labelText: 'Email')),
-          TextField(controller: passwordController, decoration: InputDecoration(labelText: 'Password'), obscureText: true),
+          TextField(controller: passController, decoration: InputDecoration(labelText: 'Password'), obscureText: true),
           SizedBox(height: 20),
-          ElevatedButton(onPressed: handleAuth, child: Text(isLogin ? 'Login' : 'Register')),
-          TextButton(
-              onPressed: () => setState(() => isLogin = !isLogin),
-              child: Text(isLogin ? 'Create Account' : 'Already have an account?'))
+          ElevatedButton(onPressed: () => handleAuth(context, true), child: Text('Login')),
+          ElevatedButton(onPressed: () => handleAuth(context, false), child: Text('Register')),
         ]),
       ),
     );
@@ -63,216 +66,184 @@ class _AuthScreenState extends State<AuthScreen> {
 }
 
 class HomeScreen extends StatelessWidget {
-  final user = FirebaseAuth.instance.currentUser;
+  final user = auth.currentUser!;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tournament App')),
-      body: Column(children: [
-        StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots(),
-          builder: (context, snapshot) {
-            final data = snapshot.data?.data() as Map<String, dynamic>?;
-            final wallet = data?['wallet'] ?? 0;
-            return ListTile(
-                title: Text('Welcome ${user!.email}'),
-                subtitle: Text('Wallet: ₹$wallet'));
-          },
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('matches').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-              final matches = snapshot.data!.docs;
-              return ListView.builder(
-                itemCount: matches.length,
-                itemBuilder: (context, index) {
-                  final match = matches[index];
-                  return ListTile(
-                    title: Text(match['title']),
-                    subtitle: Text('Entry Fee: ₹${match['entryFee']}'),
-                    trailing: Text('Slots: ${match['slots']}'),
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(builder: () => MatchDetailsScreen(matchId: match.id))),
-                  );
-                },
-              );
-            },
-          ),
-        )
-      ]),
+      appBar: AppBar(title: Text('Welcome ${user.email}')),
       drawer: Drawer(
         child: ListView(
           children: [
-            DrawerHeader(child: Text(user!.email ?? '')),
-            ListTile(title: Text('Create Match'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: () => CreateMatchScreen()))),
-            ListTile(title: Text('Profile'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: () => ProfileScreen()))),
-            ListTile(title: Text('Leaderboard'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: () => LeaderboardScreen()))),
-            ListTile(title: Text('Add Money'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AddMoneyScreen()))),
+            DrawerHeader(child: Text('Menu')),
+            ListTile(title: Text('Profile'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProfileScreen()))),
+            ListTile(title: Text('Matches'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MatchListScreen()))),
+            ListTile(title: Text('Leaderboard'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LeaderboardScreen()))),
             ListTile(title: Text('Spin to Win'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SpinScreen()))),
-            ListTile(title: Text('Chat'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen()))),
             ListTile(title: Text('Notifications'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationScreen()))),
-            ListTile(title: Text('Logout'), onTap: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AuthScreen()));
-            }),
+            ListTile(title: Text('Chat'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen()))),
+            ListTile(title: Text('Logout'), onTap: () => auth.signOut().then((_) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AuthScreen())))),
           ],
+        ),
+      ),
+      body: Center(
+        child: FutureBuilder<DocumentSnapshot>(
+          future: firestore.collection('users').doc(user.uid).get(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return CircularProgressIndicator();
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Email: ${data['email']}'),
+                Text('Wallet: ₹${data['wallet']}'),
+                ElevatedButton(onPressed: () => addMoney(user.uid), child: Text('Add Money')),
+                if (data['role'] == 'admin')
+                  ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MatchCreateScreen())), child: Text('Create Match')),
+              ],
+            );
+          },
         ),
       ),
     );
   }
-}
-class AddMoneyScreen extends StatefulWidget {
-  @override
-  State<AddMoneyScreen> createState() => _AddMoneyScreenState();
-}
 
-class _AddMoneyScreenState extends State<AddMoneyScreen> {
-  final user = FirebaseAuth.instance.currentUser;
-  final amountController = TextEditingController();
-
-  Future<void> addMoney() async {
-    final amount = int.tryParse(amountController.text.trim()) ?? 0;
-    if (amount < 5 || amount > 500) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("₹5 से ₹500 तक ही ऐड कर सकते हो")));
-      return;
-    }
-
-    final doc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
-    await FirebaseFirestore.instance.runTransaction((tx) async {
-      final snap = await tx.get(doc);
-      final current = snap['wallet'] ?? 0;
-      tx.update(doc, {'wallet': current + amount});
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('₹$amount ऐड हो गया')));
-    amountController.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Add Money')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(children: [
-          TextField(controller: amountController, decoration: InputDecoration(labelText: '₹5 - ₹500'), keyboardType: TextInputType.number),
-          SizedBox(height: 20),
-          ElevatedButton(onPressed: addMoney, child: Text('Add to Wallet'))
-        ]),
-      ),
-    );
-  }
-}
-
-class MatchDetailsScreen extends StatelessWidget {
-  final String matchId;
-
-  MatchDetailsScreen({required this.matchId});
-
-  final user = FirebaseAuth.instance.currentUser;
-
-  Future<void> joinMatch(BuildContext context, int entryFee) async {
-    final doc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
-    final snap = await doc.get();
-    final wallet = snap['wallet'] ?? 0;
-
-    if (wallet < entryFee) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('पैसे कम हैं')));
-      return;
-    }
-
-    await doc.update({'wallet': wallet - entryFee});
-    await FirebaseFirestore.instance.collection('matches').doc(matchId).collection('players').doc(user!.uid).set({
-      'email': user!.email,
-      'joinedAt': DateTime.now()
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('मैच जॉइन कर लिया')));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('matches').doc(matchId).get(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return Scaffold(body: Center(child: CircularProgressIndicator()));
-        final match = snapshot.data!;
-        return Scaffold(
-          appBar: AppBar(title: Text('Match Details')),
-          body: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Text(match['title'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Text('Entry Fee: ₹${match['entryFee']}'),
-                Text('Total Slots: ${match['slots']}'),
-                SizedBox(height: 20),
-                ElevatedButton(onPressed: () => joinMatch(context, match['entryFee']), child: Text('Join Match'))
-              ],
-            ),
+  void addMoney(String uid) {
+    showDialog(
+      context: navigatorKey.currentContext!,
+      builder: (context) {
+        int amount = 10;
+        return AlertDialog(
+          title: Text('Add Money'),
+          content: DropdownButton<int>(
+            value: amount,
+            onChanged: (val) => amount = val!,
+            items: [5, 10, 20, 50, 100, 200, 500].map((e) => DropdownMenuItem(value: e, child: Text('₹$e'))).toList(),
           ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final doc = firestore.collection('users').doc(uid);
+                final snap = await doc.get();
+                final current = (snap.data() as Map<String, dynamic>)['wallet'];
+                await doc.update({'wallet': current + amount});
+                Navigator.pop(context);
+              },
+              child: Text('Add'),
+            )
+          ],
         );
       },
     );
   }
 }
 
-class CreateMatchScreen extends StatelessWidget {
-  final titleController = TextEditingController();
-  final feeController = TextEditingController();
-  final slotController = TextEditingController();
+final navigatorKey = GlobalKey<NavigatorState>();
+
+class MatchCreateScreen extends StatelessWidget {
+  final nameController = TextEditingController();
+  final entryController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Create Match')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(children: [
-          TextField(controller: titleController, decoration: InputDecoration(labelText: 'Match Title')),
-          TextField(controller: feeController, decoration: InputDecoration(labelText: 'Entry Fee'), keyboardType: TextInputType.number),
-          TextField(controller: slotController, decoration: InputDecoration(labelText: 'Total Slots'), keyboardType: TextInputType.number),
-          SizedBox(height: 20),
+      body: Column(
+        children: [
+          TextField(controller: nameController, decoration: InputDecoration(labelText: 'Match Name')),
+          TextField(controller: entryController, decoration: InputDecoration(labelText: 'Entry Fee'), keyboardType: TextInputType.number),
           ElevatedButton(
-            onPressed: () async {
-              final user = FirebaseAuth.instance.currentUser;
-              final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-              if (doc['role'] != 'admin') {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Access Denied')));
-                return;
-              }
-
-              await FirebaseFirestore.instance.collection('matches').add({
-                'title': titleController.text.trim(),
-                'entryFee': int.parse(feeController.text.trim()),
-                'slots': int.parse(slotController.text.trim()),
+            onPressed: () {
+              firestore.collection('matches').add({
+                'name': nameController.text,
+                'entry': int.parse(entryController.text),
               });
               Navigator.pop(context);
             },
-            child: Text('Create Match'))
-        ]),
+            child: Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MatchListScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Matches')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: firestore.collection('matches').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          final matches = snapshot.data!.docs;
+          return ListView(
+            children: matches.map((match) {
+              final data = match.data() as Map<String, dynamic>;
+              return ListTile(
+                title: Text(data['name']),
+                subtitle: Text('Entry: ₹${data['entry']}'),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MatchDetailScreen(match.id, data))),
+              );
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class MatchDetailScreen extends StatelessWidget {
+  final String matchId;
+  final Map<String, dynamic> data;
+
+  MatchDetailScreen(this.matchId, this.data);
+
+  void joinMatch(BuildContext context) async {
+    final doc = firestore.collection('users').doc(auth.currentUser!.uid);
+    final snap = await doc.get();
+    final wallet = (snap.data() as Map<String, dynamic>)['wallet'];
+    if (wallet >= data['entry']) {
+      await doc.update({'wallet': wallet - data['entry']});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Match Joined!')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Insufficient Balance')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(data['name'])),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Entry Fee: ₹${data['entry']}'),
+          ElevatedButton(onPressed: () => joinMatch(context), child: Text('Join Match')),
+        ],
       ),
     );
   }
 }
 
 class ProfileScreen extends StatelessWidget {
-  final user = FirebaseAuth.instance.currentUser;
-
   @override
   Widget build(BuildContext context) {
+    final uid = auth.currentUser!.uid;
     return Scaffold(
       appBar: AppBar(title: Text('Profile')),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots(),
+      body: FutureBuilder<DocumentSnapshot>(
+        future: firestore.collection('users').doc(uid).get(),
         builder: (context, snapshot) {
-          final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-          return ListTile(
-            title: Text('Email: ${user!.email}'),
-            subtitle: Text('Wallet: ₹${data['wallet'] ?? 0}\nRole: ${data['role'] ?? "user"}'),
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          return Column(
+            children: [
+              Text('Email: ${data['email']}'),
+              Text('Wallet: ₹${data['wallet']}'),
+              Text('Role: ${data['role']}'),
+            ],
           );
         },
       ),
@@ -286,19 +257,18 @@ class LeaderboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text('Leaderboard')),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').orderBy('wallet', descending: true).limit(10).snapshots(),
+        stream: firestore.collection('users').orderBy('wallet', descending: true).snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) return CircularProgressIndicator();
           final users = snapshot.data!.docs;
-          return ListView.builder(
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              final user = users[index];
+          return ListView(
+            children: users.map((user) {
+              final data = user.data() as Map<String, dynamic>;
               return ListTile(
-                title: Text(user['email']),
-                trailing: Text('₹${user['wallet']}'),
+                title: Text(data['email']),
+                trailing: Text('₹${data['wallet']}'),
               );
-            },
+            }).toList(),
           );
         },
       ),
@@ -307,14 +277,30 @@ class LeaderboardScreen extends StatelessWidget {
 }
 
 class SpinScreen extends StatelessWidget {
-  final user = FirebaseAuth.instance.currentUser;
+  final user = auth.currentUser;
 
   void spinAndAddMoney(BuildContext context) async {
-    final reward = [0, 5, 10, 20, 0, 15][Random().nextInt(6)];
-    final doc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+    final doc = firestore.collection('users').doc(user!.uid);
     final snap = await doc.get();
-    final wallet = snap['wallet'] ?? 0;
-    await doc.update({'wallet': wallet + reward});
+    final data = snap.data() as Map<String, dynamic>;
+    final lastSpin = (data['lastSpin'] as Timestamp?)?.toDate();
+    final today = DateTime.now();
+
+    if (lastSpin != null &&
+        lastSpin.day == today.day &&
+        lastSpin.month == today.month &&
+        lastSpin.year == today.year) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('आज आपने पहले ही Spin कर लिया है')));
+      return;
+    }
+
+    final reward = [0, 5, 10, 20, 0, 15][Random().nextInt(6)];
+    final wallet = data['wallet'] ?? 0;
+
+    await doc.update({
+      'wallet': wallet + reward,
+      'lastSpin': DateTime.now(),
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You won ₹$reward!')));
   }
@@ -322,7 +308,7 @@ class SpinScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Spin & Win')),
+      appBar: AppBar(title: Text('Spin to Win')),
       body: Center(
         child: ElevatedButton(
           onPressed: () => spinAndAddMoney(context),
@@ -333,71 +319,78 @@ class SpinScreen extends StatelessWidget {
   }
 }
 
-class ChatScreen extends StatelessWidget {
-  final user = FirebaseAuth.instance.currentUser;
-  final msgController = TextEditingController();
-
+class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Global Chat')),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chat').orderBy('time').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
-                final messages = snapshot.data!.docs;
-                return ListView(
-                  children: messages.map((msg) => ListTile(title: Text(msg['text']), subtitle: Text(msg['email']))).toList(),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                Expanded(child: TextField(controller: msgController, decoration: InputDecoration(hintText: 'Message...'))),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () async {
-                    if (msgController.text.trim().isEmpty) return;
-                    await FirebaseFirestore.instance.collection('chat').add({
-                      'email': user!.email,
-                      'text': msgController.text.trim(),
-                      'time': DateTime.now()
-                    });
-                    msgController.clear();
-                  },
-                )
-              ],
-            ),
-          )
-        ],
+      appBar: AppBar(title: Text('Notifications')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: firestore.collection('notifications').orderBy('time', descending: true).snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          final notifs = snapshot.data!.docs;
+          return ListView(
+            children: notifs.map((notif) {
+              final data = notif.data() as Map<String, dynamic>;
+              return ListTile(title: Text(data['message']));
+            }).toList(),
+          );
+        },
       ),
     );
   }
 }
 
-class NotificationScreen extends StatelessWidget {
-  final notifications = [
-    'New tournament added!',
-    'Wallet offer: Add ₹100 and get ₹20 bonus!',
-    'Top 3 players win special rewards!',
-  ];
+class ChatScreen extends StatelessWidget {
+  final controller = TextEditingController();
+  final user = auth.currentUser!;
+
+  void sendMessage() {
+    if (controller.text.trim().isEmpty) return;
+    firestore.collection('chat').add({
+      'text': controller.text.trim(),
+      'email': user.email,
+      'time': Timestamp.now(),
+    });
+    controller.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Notifications')),
-      body: ListView.builder(
-        itemCount: notifications.length,
-        itemBuilder: (context, index) => ListTile(
-          leading: Icon(Icons.notifications),
-          title: Text(notifications[index]),
-        ),
+      appBar: AppBar(title: Text('Chat')),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: firestore.collection('chat').orderBy('time', descending: true).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return CircularProgressIndicator();
+                final messages = snapshot.data!.docs;
+                return ListView(
+                  reverse: true,
+                  children: messages.map((msg) {
+                    final data = msg.data() as Map<String, dynamic>;
+                    final time = (data['time'] as Timestamp?)?.toDate();
+                    final formattedTime = time != null
+                        ? TimeOfDay.fromDateTime(time).format(context)
+                        : '';
+                    return ListTile(
+                      title: Text(data['text']),
+                      subtitle: Text('${data['email']} • $formattedTime'),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(child: TextField(controller: controller, decoration: InputDecoration(hintText: 'Type message...'))),
+              IconButton(onPressed: sendMessage, icon: Icon(Icons.send)),
+            ],
+          )
+        ],
       ),
     );
   }
