@@ -218,8 +218,20 @@ class _HomePageState extends State<HomePage> {
                     title: Text(doc['title']),
                     subtitle: Text('Entry: ₹${doc['entryFee']}'),
                     trailing: ElevatedButton(
-                      onPressed: () => joinMatch(doc.id, doc['entryFee']),
-                      child: Text('Join'),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MatchDetailScreen(
+                              matchId: doc.id,
+                              title: doc['title'],
+                              entryFee: doc['entryFee'],
+                              onJoin: () => joinMatch(doc.id, doc['entryFee']),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text('Details'),
                     ),
                   );
                 }).toList(),
@@ -292,6 +304,46 @@ class _HomePageState extends State<HomePage> {
           ),
           ElevatedButton(onPressed: sendReport, child: Text('Submit Report')),
         ],
+      ),
+    );
+  }
+}
+
+class MatchDetailScreen extends StatelessWidget {
+  final String matchId;
+  final String title;
+  final int entryFee;
+  final VoidCallback onJoin;
+
+  MatchDetailScreen({
+    required this.matchId,
+    required this.title,
+    required this.entryFee,
+    required this.onJoin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Match Details')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Match Title: $title', style: TextStyle(fontSize: 20)),
+            SizedBox(height: 10),
+            Text('Entry Fee: ₹$entryFee', style: TextStyle(fontSize: 18)),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                onJoin();
+                Navigator.pop(context);
+              },
+              child: Text('Join Match'),
+            )
+          ],
+        ),
       ),
     );
   }
