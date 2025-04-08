@@ -91,7 +91,6 @@ class _HomePageState extends State<HomePage> {
   int wallet = 0;
   String role = 'user';
   String lastSpin = '';
-
   final msgController = TextEditingController();
 
   @override
@@ -140,8 +139,11 @@ class _HomePageState extends State<HomePage> {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (lastSpin == today) return;
 
-    int reward = [5, 10, 15, 20]..shuffle();
-    await updateWallet(reward.first);
+    List<int> rewards = [5, 10, 15, 20];
+    rewards.shuffle();
+    int reward = rewards.first;
+
+    await updateWallet(reward);
     await FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
