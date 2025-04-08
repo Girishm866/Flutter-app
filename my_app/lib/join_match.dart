@@ -17,7 +17,6 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
     final walletSnap = await walletRef.get();
     final currentBalance = walletSnap.data()?['wallet'] ?? 0;
 
-    // Double join check
     final participantDoc = await FirebaseFirestore.instance
         .collection('matches')
         .doc(match.id)
@@ -34,12 +33,18 @@ class _JoinMatchScreenState extends State<JoinMatchScreen> {
 
     if (currentBalance >= entryFee) {
       await walletRef.update({'wallet': currentBalance - entryFee});
+
       await FirebaseFirestore.instance
           .collection('matches')
           .doc(match.id)
           .collection('participants')
           .doc(userId)
           .set({'joinedAt': Timestamp.now()});
+
+      // Match History Update
+      await walletRef.update({
+        'matchHistory': FieldValue.arrayUnion([match.id])
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Match joined successfully!')),
