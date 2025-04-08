@@ -92,6 +92,8 @@ class _HomePageState extends State<HomePage> {
   String role = 'user';
   String lastSpin = '';
   final msgController = TextEditingController();
+  String selectedReportType = 'Cheating';
+  final reportController = TextEditingController();
 
   @override
   void initState() {
@@ -158,6 +160,18 @@ class _HomePageState extends State<HomePage> {
       'time': Timestamp.now(),
     });
     msgController.clear();
+  }
+
+  Future<void> sendReport() async {
+    if (reportController.text.trim().isEmpty) return;
+    await FirebaseFirestore.instance.collection('reports').add({
+      'uid': FirebaseAuth.instance.currentUser!.uid,
+      'type': selectedReportType,
+      'description': reportController.text.trim(),
+      'time': Timestamp.now(),
+    });
+    reportController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Report submitted')));
   }
 
   @override
@@ -263,6 +277,20 @@ class _HomePageState extends State<HomePage> {
               IconButton(onPressed: sendMessage, icon: Icon(Icons.send)),
             ],
           ),
+          Divider(),
+          Text('Report System'),
+          DropdownButton<String>(
+            value: selectedReportType,
+            onChanged: (value) => setState(() => selectedReportType = value!),
+            items: ['Cheating', 'Abusive Behavior', 'Other']
+                .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                .toList(),
+          ),
+          TextField(
+            controller: reportController,
+            decoration: InputDecoration(hintText: 'Describe the issue'),
+          ),
+          ElevatedButton(onPressed: sendReport, child: Text('Submit Report')),
         ],
       ),
     );
