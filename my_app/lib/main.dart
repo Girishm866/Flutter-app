@@ -27,6 +27,8 @@ class AuthCheck extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return Center(child: CircularProgressIndicator());
         if (snapshot.hasData) return HomePage();
         return AuthPage();
       },
@@ -46,23 +48,27 @@ class _AuthPageState extends State<AuthPage> {
   Future<void> registerOrLogin() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passController.text,
+        email: emailController.text.trim(),
+        password: passController.text.trim(),
       );
     } catch (e) {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text,
-        password: passController.text,
-      );
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .set({
-        'email': emailController.text,
-        'wallet': 0,
-        'role': 'user',
-        'lastSpin': '',
-      });
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passController.text.trim(),
+        );
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .set({
+          'email': emailController.text.trim(),
+          'wallet': 0,
+          'role': 'user',
+          'lastSpin': '',
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      }
     }
   }
 
@@ -106,11 +112,13 @@ class _HomePageState extends State<HomePage> {
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .get();
-    setState(() {
-      wallet = doc['wallet'];
-      role = doc['role'];
-      lastSpin = doc['lastSpin'];
-    });
+    if (doc.exists) {
+      setState(() {
+        wallet = doc['wallet'];
+        role = doc['role'];
+        lastSpin = doc['lastSpin'];
+      });
+    }
   }
 
   Future<void> updateWallet(int amount) async {
@@ -134,6 +142,8 @@ class _HomePageState extends State<HomePage> {
           .doc(FirebaseAuth.instance.currentUser!.uid)
           .set({'joinedAt': Timestamp.now()});
       fetchUserData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not enough wallet balance')));
     }
   }
 
@@ -190,10 +200,7 @@ class _HomePageState extends State<HomePage> {
           Text('Role: $role'),
           SizedBox(height: 10),
           ElevatedButton(onPressed: spinToWin, child: Text('Spin to Win')),
-          ElevatedButton(
-            onPressed: () => updateWallet(50),
-            child: Text('Add ₹50'),
-          ),
+          ElevatedButton(onPressed: () => updateWallet(50), child: Text('Add ₹50')),
           if (role == 'admin')
             ElevatedButton(
               onPressed: () async {
@@ -345,6 +352,3 @@ class MatchDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
