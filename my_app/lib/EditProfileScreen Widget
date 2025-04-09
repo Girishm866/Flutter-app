@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class EditProfileScreen extends StatefulWidget {
+  @override
+  _EditProfileScreenState createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final nameController = TextEditingController();
+  final photoController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCurrentInfo();
+  }
+
+  Future<void> fetchCurrentInfo() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    nameController.text = doc['name'] ?? '';
+    photoController.text = doc['photoUrl'] ?? '';
+  }
+
+  Future<void> updateProfile() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'name': nameController.text.trim(),
+      'photoUrl': photoController.text.trim(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile Updated')));
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Edit Profile')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(children: [
+          TextField(controller: nameController, decoration: InputDecoration(labelText: 'Name')),
+          TextField(controller: photoController, decoration: InputDecoration(labelText: 'Photo URL')),
+          SizedBox(height: 16),
+          ElevatedButton(onPressed: updateProfile, child: Text('Save Changes')),
+        ]),
+      ),
+    );
+  }
+}
