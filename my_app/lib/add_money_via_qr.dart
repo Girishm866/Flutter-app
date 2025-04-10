@@ -10,6 +10,7 @@ class AddMoneyViaQRScreen extends StatefulWidget {
 
 class _AddMoneyViaQRScreenState extends State<AddMoneyViaQRScreen> {
   int selectedAmount = 0;
+  bool isLoading = false;
 
   final qrImageUrl = 'https://drive.google.com/uc?export=view&id=17qu1_KyWzToN1L9YnC2uQWXEb6AdT3C9';
   final upiId = 'gj990206@ybl';
@@ -19,6 +20,8 @@ class _AddMoneyViaQRScreenState extends State<AddMoneyViaQRScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select an amount')));
       return;
     }
+
+    setState(() => isLoading = true);
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -30,7 +33,10 @@ class _AddMoneyViaQRScreenState extends State<AddMoneyViaQRScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment request sent. Waiting for admin approval.')));
       setState(() {
         selectedAmount = 0;
+        isLoading = false;
       });
+    } else {
+      setState(() => isLoading = false);
     }
   }
 
@@ -69,8 +75,10 @@ class _AddMoneyViaQRScreenState extends State<AddMoneyViaQRScreen> {
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: submitRequest,
-              child: Text('I Have Paid'),
+              onPressed: isLoading ? null : submitRequest,
+              child: isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text('I Have Paid'),
               style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
           ],
