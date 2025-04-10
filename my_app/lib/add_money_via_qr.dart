@@ -11,7 +11,7 @@ class AddMoneyViaQRScreen extends StatefulWidget {
 class _AddMoneyViaQRScreenState extends State<AddMoneyViaQRScreen> {
   int selectedAmount = 0;
 
-  final qrImageUrl = 'https://your-qr-image-url.jpg'; // यहाँ अपना QR लिंक डालो
+  final qrImageUrl = 'https://drive.google.com/uc?export=view&id=17qu1_KyWzToN1L9YnC2uQWXEb6AdT3C9';
   final upiId = 'gj990206@ybl';
 
   void submitRequest() async {
