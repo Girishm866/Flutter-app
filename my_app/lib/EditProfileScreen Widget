@@ -10,6 +10,8 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final nameController = TextEditingController();
   final photoController = TextEditingController();
+  bool isLoading = false;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
   void initState() {
@@ -18,20 +20,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> fetchCurrentInfo() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
     if (data != null) {
       nameController.text = data['name'] ?? '';
       photoController.text = data['photoUrl'] ?? '';
+      setState(() {});
     }
   }
 
   Future<void> updateProfile() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    if (nameController.text.trim().isEmpty || photoController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Name और Photo URL दोनों भरना ज़रूरी है')));
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
     await FirebaseFirestore.instance.collection('users').doc(uid).update({
       'name': nameController.text.trim(),
       'photoUrl': photoController.text.trim(),
+    });
+
+    setState(() {
+      isLoading = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile Updated')));
@@ -42,24 +56,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Edit Profile')),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(children: [
-          TextField(
-            controller: nameController,
-            decoration: InputDecoration(labelText: 'Name'),
-          ),
-          TextField(
-            controller: photoController,
-            decoration: InputDecoration(labelText: 'Photo URL'),
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: updateProfile,
-            child: Text('Save Changes'),
-          ),
-        ]),
-      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: photoController.text.isNotEmpty
+                        ? NetworkImage(photoController.text)
+                        : null,
+                    child: photoController.text.isEmpty
+                        ? Icon(Icons.person, size: 40)
+                        : null,
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: 'Name'),
+                  ),
+                  TextField(
+                    controller: photoController,
+                    decoration: InputDecoration(labelText: 'Photo URL'),
+                    onChanged: (value) {
+                      setState(() {}); // CircleAvatar को अपडेट करेगा
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: updateProfile,
+                    child: Text('Save Changes'),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
