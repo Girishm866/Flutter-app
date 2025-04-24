@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
+class AdminCreateMatchScreen extends StatefulWidget {
+  @override
+  _AdminCreateMatchScreenState createState() => _AdminCreateMatchScreenState();
+}
+
+class _AdminCreateMatchScreenState extends State<AdminCreateMatchScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _matchNameController = TextEditingController();
+  final _entryFeeController = TextEditingController();
+  final _totalSlotsController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+
+  Future<void> _createMatch() async {
+    if (_formKey.currentState!.validate()) {
+      await FirebaseFirestore.instance.collection('matches').add({
+        'matchName': _matchNameController.text,
+        'entryFee': int.parse(_entryFeeController.text),
+        'totalSlots': int.parse(_totalSlotsController.text),
+        'createdAt': Timestamp.now(),
+        'matchTime': Timestamp.fromDate(_selectedDate),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Match Created Successfully')),
+      );
+      _formKey.currentState!.reset();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Create New Match')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _matchNameController,
+                decoration: InputDecoration(labelText: 'Match Name'),
+                validator: (value) => value!.isEmpty ? 'Enter match name' : null,
+              ),
+              TextFormField(
+                controller: _entryFeeController,
+                decoration: InputDecoration(labelText: 'Entry Fee'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Enter entry fee' : null,
+              ),
+              TextFormField(
+                controller: _totalSlotsController,
+                decoration: InputDecoration(labelText: 'Total Slots'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value!.isEmpty ? 'Enter total slots' : null,
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Match Time: ${DateFormat.yMMMd().add_jm().format(_selectedDate)}'),
+                  ),
+                  TextButton(
+                    child: Text('Pick Date'),
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (time != null) {
+                          setState(() {
+                            _selectedDate = DateTime(
+                              picked.year,
+                              picked.month,
+                              picked.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _createMatch,
+                child: Text('Create Match'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
