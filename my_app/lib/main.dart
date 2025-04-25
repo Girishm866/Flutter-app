@@ -21,3 +21,47 @@ class VictoryRoyaleApp extends StatelessWidget {
     );
   }
 }
+import 'package:flutter/material.dart';
+
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Login")),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/home');
+          },
+          child: Text("Login (Dummy)"),
+        ),
+      ),
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+class RegisterPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Register")),
+      body: Center(
+        child: Text("Register Screen (Coming Soon)"),
+      ),
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Victory Royale")),
+      body: Center(
+        child: Text("Welcome to Victory Royale!"),
+      ),
+    );
+  }
+}
