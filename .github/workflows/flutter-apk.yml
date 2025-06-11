@@ -12,27 +12,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Safe Git Directory
-        run: git config --global --add safe.directory /github/workspace
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.19.0' # अपने Flutter का version डालो
 
       - name: Install dependencies
+        working-directory: my_app
         run: flutter pub get
-        working-directory: victory_royale
 
       - name: Build APK
-        run: flutter build apk --release
-        working-directory: victory_royale
+        working-directory: my_app
+        run: flutter build apk
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4   # ✅ Updated from v3 to v4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: app-release.apk
-          path: victory_royale/build/app/outputs/flutter-apk/app-release.apk
+          name: release-apk
+          path: my_app/build/app/outputs/flutter-apk/app-release.apk
