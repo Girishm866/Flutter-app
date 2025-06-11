@@ -1,44 +1,38 @@
-name: victory_royale
-description: Victory Royale - Tournament App
-publish_to: 'none' # This prevents publishing to pub.dev
+name: Flutter Build
 
-version: 1.0.0+1
+on:
+  push:
+    branches:
+      - main
 
-environment:
-  sdk: '>=3.1.0 <4.0.0'
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-dependencies:
-  flutter:
-    sdk: flutter
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-  # Firebase & Firestore
-  firebase_core: ^3.12.1
-  firebase_auth: ^5.5.1
-  cloud_firestore: ^5.6.5
+      - name: Safe Git Directory
+        run: git config --global --add safe.directory /github/workspace
 
-  # Ads
-  google_mobile_ads: ^5.3.1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
 
-  # UI & Effects
-  google_fonts: ^6.1.0
-  animations: ^2.0.11
-  flutter_gradient_colors: ^2.1.1
-  flutter_svg: ^2.0.10
-  shimmer: ^3.0.0
-  lottie: ^3.1.0
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: my_app   # <-- यहाँ तेरे actual Flutter folder का नाम होना चाहिए
 
-  # iOS icons
-  cupertino_icons: ^1.0.2
+      - name: Build APK
+        run: flutter build apk --release
+        working-directory: my_app
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.1  # Recommended to downgrade to match Dart SDK
-
-flutter:
-  uses-material-design: true
-
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/animations/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: my_app/build/app/outputs/flutter-apk/app-release.apk
