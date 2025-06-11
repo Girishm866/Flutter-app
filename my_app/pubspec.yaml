@@ -1,6 +1,6 @@
 name: victory_royale
 description: Victory Royale - Tournament App
-publish_to: 'none'
+publish_to: 'none' # This prevents publishing to pub.dev
 
 version: 1.0.0+1
 
@@ -19,21 +19,21 @@ dependencies:
   # Ads
   google_mobile_ads: ^5.3.1
 
-  # UI Polish Tools
-  google_fonts: ^6.1.0        # Stylish fonts
-  animations: ^2.0.11         # Page transitions, fade, slide, scale, etc.
-  flutter_gradient_colors: ^2.1.1  # Gradient backgrounds
-  flutter_svg: ^2.0.10        # For SVG icons (e.g., vector logos)
-  shimmer: ^3.0.0             # Loading shimmer effect
-  lottie: ^3.1.0              # For Lottie animation (e.g., loading, empty state)
+  # UI & Effects
+  google_fonts: ^6.1.0
+  animations: ^2.0.11
+  flutter_gradient_colors: ^2.1.1
+  flutter_svg: ^2.0.10
+  shimmer: ^3.0.0
+  lottie: ^3.1.0
 
-  # Cupertino Icons (iOS style icons)
+  # iOS icons
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^3.0.1  # Recommended to downgrade to match Dart SDK
 
 flutter:
   uses-material-design: true
