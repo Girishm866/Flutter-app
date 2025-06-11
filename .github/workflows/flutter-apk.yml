@@ -16,18 +16,18 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'  
+          flutter-version: '3.19.6'
 
       - name: Install dependencies
         run: flutter pub get
-        working-directory: my_app
+        working-directory: victory_royale
 
       - name: Build APK
         run: flutter build apk --release
-        working-directory: my_app
+        working-directory: victory_royale
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: app-release.apk
-          path: my_app/build/app/outputs/flutter-apk/app-release.apk
+          path: victory_royale/build/app/outputs/flutter-apk/app-release.apk
